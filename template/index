@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F1 Strategy Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-mark"><span class="brand-slash"></span><span>F1<span class="red">/</span>LAB</span></div>
+      <div class="sidebar-label">RACE ENGINEERING</div>
+      <div class="nav-item active"><span class="nav-icon">◈</span> Strategy workspace</div>
+      <div class="nav-item muted"><span class="nav-icon">▥</span> Race simulation</div>
+      <div class="nav-item muted"><span class="nav-icon">⌁</span> Tyre telemetry</div>
+      <div class="sidebar-bottom">
+        <div class="status-dot"></div>
+        <div><strong>OCTAVE ENGINE</strong><small id="engine-status">Checking connection…</small></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">RACE SIMULATION SYSTEM <span class="slash">/</span> WORKSPACE 01</div><h1>STRATEGY <span class="red">LAB</span></h1></div>
+        <div class="top-meta"><span class="live-pill"><i></i> SIMULATION MODE</span><span class="avatar">FL</span></div>
+      </header>
+
+      <section class="intro-row">
+        <div><p class="section-kicker">RACE CONTROL</p><h2>Find the fastest way to the flag.</h2><p class="subtext">Configure the race. Compare tyre plans. Let the optimizer do the laps.</p></div>
+        <div class="flag-art" aria-hidden="true"><div class="flag-grid"></div><span>01<span class="red">.</span></span></div>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="panel setup-panel">
+          <div class="panel-heading"><div><span class="panel-index">01</span><h3>Race configuration</h3></div><span class="tiny-tag">INPUTS</span></div>
+          <form id="strategy-form">
+            <div class="field-head"><label for="laps">Race distance</label><strong><span id="laps-value">30</span> <small>LAPS</small></strong></div>
+            <input id="laps" type="range" min="10" max="60" step="1" value="30">
+            <div class="range-labels"><span>10 LAPS</span><span>60 LAPS</span></div>
+
+            <div class="field-head pit-head"><label for="pit-loss">Pit-stop time loss</label><strong><span id="pit-loss-value">22.0</span> <small>SEC</small></strong></div>
+            <input id="pit-loss" type="range" min="10" max="40" step="0.5" value="22">
+            <div class="range-labels"><span>10 SEC</span><span>40 SEC</span></div>
+
+            <div class="tyre-label">AVAILABLE COMPOUNDS</div>
+            <div class="tyre-options">
+              <label class="tyre-choice"><input type="checkbox" checked disabled><span class="tyre-chip soft">S</span><span>Soft</span><small>FAST</small></label>
+              <label class="tyre-choice"><input type="checkbox" checked disabled><span class="tyre-chip medium">M</span><span>Medium</span><small>BALANCED</small></label>
+              <label class="tyre-choice"><input type="checkbox" checked disabled><span class="tyre-chip hard">H</span><span>Hard</span><small>DURABLE</small></label>
+            </div>
+            <label class="rule-toggle"><input id="two-compounds" type="checkbox" checked><span class="toggle-ui"></span><span><b>Require two different compounds</b><small>Enforce a dry-race compound rule</small></span></label>
+            <button class="primary-button" id="run-button" type="submit"><span>OPTIMIZE STRATEGY</span><span class="button-arrow">↗</span></button>
+            <p class="fine-print">Uses the project’s hypothetical tyre-wear and fuel model.</p>
+          </form>
+        </div>
+
+        <div class="right-stack">
+          <div class="panel hero-panel">
+            <div class="panel-heading"><div><span class="panel-index">02</span><h3>Recommended strategy</h3></div><span class="tiny-tag success-tag" id="result-tag">READY</span></div>
+            <div id="empty-state" class="empty-state"><div class="empty-track">➜</div><h3>Ready when you are.</h3><p>Run the optimizer to see the fastest tyre sequence and pit windows.</p></div>
+            <div id="result-state" class="hidden">
+              <div class="strategy-summary"><div><div class="metric-label">OPTIMAL RACE TIME</div><div class="big-time" id="total-time">—</div><div class="metric-note" id="average-time">— average per lap</div></div><div class="stop-count"><span id="stop-count">1</span><small>PIT STOPS</small></div></div>
+              <div class="stint-track" id="stint-track"></div>
+              <div class="pit-details" id="pit-details"></div>
+              <div class="result-foot"><span><i class="status-dot"></i> OPTIMIZATION COMPLETE</span><span id="candidate-count">— candidates</span></div>
+            </div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-heading"><div><span class="panel-index">03</span><h3>Lap-time telemetry</h3></div><span class="tiny-tag">SECONDS / LAP</span></div>
+            <div class="chart-wrap"><canvas id="lap-chart"></canvas></div>
+            <div class="chart-legend"><span><i class="legend-line red-line"></i> Soft</span><span><i class="legend-line yellow-line"></i> Medium</span><span><i class="legend-line grey-line"></i> Hard</span><span><i class="legend-dash"></i> Pit stop</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel bottom-panel">
+        <div class="panel-heading"><div><span class="panel-index">04</span><h3>Fastest strategy comparison</h3></div><span class="tiny-tag">TOP 10</span></div>
+        <div class="table-wrap"><table><thead><tr><th>RANK</th><th>TYRE SEQUENCE</th><th>PIT AFTER LAP</th><th>STOPS</th><th>TOTAL TIME</th><th>GAP TO BEST</th></tr></thead><tbody id="strategy-table"><tr><td colspan="6" class="table-empty">Your ranked strategies will appear here after optimization.</td></tr></tbody></table></div>
+      </section>
+      <footer><span>F1 STRATEGY LAB <span class="red">/</span> EDUCATIONAL SIMULATION</span><span>MODEL VALUES ARE HYPOTHETICAL · NOT REAL F1 PREDICTIONS</span></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

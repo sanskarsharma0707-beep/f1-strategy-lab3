@@ -1,23 +1,16 @@
-# Use an official lightweight Python image
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Install GNU Octave on the system
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    octave \
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends octave ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
 WORKDIR /app
-
-# Copy requirements and install Python libraries
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy all project files into the container
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 COPY . .
 
-# Expose port and launch Flask
-ENV PORT=5000
-EXPOSE 5000
-
-CMD ["python", "app.py"]
+ENV PORT=10000
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --timeout 180 app:app"]

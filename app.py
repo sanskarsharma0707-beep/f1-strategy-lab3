@@ -114,6 +114,8 @@ def optimize():
     except subprocess.TimeoutExpired:
         return jsonify({"error": "The optimization took too long. Try a shorter race distance."}), 504
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(exc)}), 500
 
 if __name__ == "__main__":

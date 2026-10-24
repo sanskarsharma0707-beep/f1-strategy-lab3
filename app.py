@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
-ENGINE_FILE = APP_DIR / "f1_strategy_lab.m"
+ENGINE_FILE = APP_DIR / "engine" / "f1_strategy_lab.m"
 app = Flask(__name__)
 
 def octave_quote(value: str) -> str:
@@ -42,27 +42,29 @@ def run_octave_simulation(settings):
             "requireTwoCompounds": require_two
         }), encoding="utf-8")
 
-        # The driver is created per request so simultaneous requests don't overwrite each other.
+        # The driver sets F1_WEB_MODE=true and runs the all-in-one script to load its functions
         driver = f"""
-addpath('{octave_quote(APP_DIR / 'engine')}');
+clear all;
+F1_WEB_MODE = true;
+run('{octave_quote(ENGINE_FILE)}');
 cfg = jsondecode(fileread('{octave_quote(input_path)}'));
 params = default_params(cfg.laps, cfg.pitLoss);
 params.requireTwoCompounds = logical(cfg.requireTwoCompounds);
 [bestStrategy, bestTime, results] = optimize_strategy(params);
 if isempty(results) || ~isfinite(bestTime) || isempty(bestStrategy.pitLaps)
-  error('No feasible strategy found for these settings.');
+    error('No feasible strategy found for these settings.');
 end
 [totalTime, lapTimes, tyreAges, fuelLoads] = simulate_strategy(bestStrategy, params);
 [sortedTimes, order] = sort([results.totalTime]);
 topCount = min(10, numel(order));
 top = struct('rank', {{}}, 'pitLaps', {{}}, 'compounds', {{}}, 'totalTime', {{}}, 'gap', {{}});
 for i = 1:topCount
-  r = results(order(i));
-  top(i).rank = i;
-  top(i).pitLaps = r.pitLaps;
-  top(i).compounds = r.compounds;
-  top(i).totalTime = r.totalTime;
-  top(i).gap = r.totalTime - sortedTimes(1);
+    r = results(order(i));
+    top(i).rank = i;
+    top(i).pitLaps = r.pitLaps;
+    top(i).compounds = r.compounds;
+    top(i).totalTime = r.totalTime;
+    top(i).gap = r.totalTime - sortedTimes(1);
 end
 out = struct();
 out.nLaps = params.nLaps;
